@@ -8,5 +8,4 @@ The Iris genus entails about 300 species, but our program will classify only the
 - Iris virginica
 - Iris versicolor
 
-
-[TensorFlow](https://www.tensorflow.org/get_started/eager)
+See the complete example on [TensorFlow](https://www.tensorflow.org/get_started/eager)
