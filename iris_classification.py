@@ -31,3 +31,9 @@ train_dataset = train_dataset.batch(32)
 features, label = tfe.Iterator(train_dataset).next()
 print("example features:", features[0])
 print("example label:", label[0])
+
+model = tf.keras.Sequential([
+  tf.keras.layers.Dense(10, activation="relu", input_shape=(4,)),  # input shape required
+  tf.keras.layers.Dense(10, activation="relu"),
+  tf.keras.layers.Dense(3)
+])
