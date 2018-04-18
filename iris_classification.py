@@ -26,7 +26,7 @@ def grad(model, inputs, targets):
     loss_value = loss(model, inputs, targets)
   return tape.gradient(loss_value, model.variables)
 
-#Download the datasets
+#Download train dataset
 train_dataset_url = "http://download.tensorflow.org/data/iris_training.csv"
 train_dataset_fp = tf.keras.utils.get_file(fname=os.path.basename(train_dataset_url), origin=train_dataset_url)
 
@@ -35,6 +35,16 @@ train_dataset = train_dataset.skip(1)             # skip the first header row
 train_dataset = train_dataset.map(parse_csv)      # parse each row
 train_dataset = train_dataset.shuffle(buffer_size=1000)  # randomize
 train_dataset = train_dataset.batch(32)
+test_url = "http://download.tensorflow.org/data/iris_test.csv"
+
+#Download test dataset
+test_fp = tf.keras.utils.get_file(fname=os.path.basename(test_url), origin=test_url)
+
+test_dataset = tf.data.TextLineDataset(test_fp)
+test_dataset = test_dataset.skip(1)             # skip header row
+test_dataset = test_dataset.map(parse_csv)      # parse each row with the funcition created earlier
+test_dataset = test_dataset.shuffle(1000)       # randomize
+test_dataset = test_dataset.batch(32)           # use the same batch size as the training set
 
 # View a single example entry from a batch
 features, label = tfe.Iterator(train_dataset).next()
@@ -79,14 +89,39 @@ for epoch in range(num_epochs):
   if epoch % 50 == 0:
     print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(epoch,epoch_loss_avg.result(),epoch_accuracy.result()))
 
-fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
-fig.suptitle('Training Metrics')
+##To plot the modeltraining progress
+#fig, axes = plt.subplots(2, sharex=True, figsize=(12, 8))
+#fig.suptitle('Training Metrics')
 
-axes[0].set_ylabel("Loss", fontsize=14)
-axes[0].plot(train_loss_results)
+#axes[0].set_ylabel("Loss", fontsize=14)
+#axes[0].plot(train_loss_results)
 
-axes[1].set_ylabel("Accuracy", fontsize=14)
-axes[1].set_xlabel("Epoch", fontsize=14)
-axes[1].plot(train_accuracy_results)
+#axes[1].set_ylabel("Accuracy", fontsize=14)
+#axes[1].set_xlabel("Epoch", fontsize=14)
+#axes[1].plot(train_accuracy_results)
 
-plt.show()
+#plt.show()
+
+test_accuracy = tfe.metrics.Accuracy()
+
+for (x, y) in tfe.Iterator(test_dataset):
+  prediction = tf.argmax(model(x), axis=1, output_type=tf.int32)
+  test_accuracy(prediction, y)
+
+print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
+
+#Use the trained model to make predictions
+class_ids = ["Iris setosa", "Iris versicolor", "Iris virginica"]
+
+predict_dataset = tf.convert_to_tensor([
+    [5.1, 3.3, 1.7, 0.5,],
+    [5.9, 3.0, 4.2, 1.5,],
+    [6.9, 3.1, 5.4, 2.1]
+])
+
+predictions = model(predict_dataset)
+
+for i, logits in enumerate(predictions):
+  class_idx = tf.argmax(logits).numpy()
+  name = class_ids[class_idx]
+  print("Example {} prediction: {}".format(i, name))
